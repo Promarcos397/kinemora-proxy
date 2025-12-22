@@ -28,8 +28,11 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Parse destination URL
-  const destination = getQuery<{ destination?: string }>(event).destination;
+  // Parse destination URL and headers from query
+  const query = getQuery<{ destination?: string, headers?: string }>(event);
+  const destination = query.destination;
+  const headersParam = query.headers;
+
   if (!destination) {
     return await sendJson({
       event,
@@ -40,6 +43,15 @@ export default defineEventHandler(async (event) => {
         })`,
       },
     });
+  }
+
+  let queryHeaders: Record<string, string> = {};
+  if (headersParam) {
+    try {
+      queryHeaders = JSON.parse(headersParam);
+    } catch (e) {
+      // Ignore invalid JSON
+    }
   }
 
   // Check if allowed to make the request
@@ -59,11 +71,17 @@ export default defineEventHandler(async (event) => {
 
   // Proxy the request
   try {
+    const fetchHeaders = getProxyHeaders(event.headers);
+    // Merge headers from query param (these are usually real names like 'Referer')
+    Object.entries(queryHeaders).forEach(([k, v]) => {
+      fetchHeaders.set(k, v);
+    });
+
     await specificProxyRequest(event, destination, {
       blacklistedHeaders: getBlacklistedHeaders(),
       fetchOptions: {
         redirect: 'follow',
-        headers: getProxyHeaders(event.headers),
+        headers: fetchHeaders,
         body,
       },
       onResponse(outputEvent, response) {
