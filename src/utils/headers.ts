@@ -21,6 +21,11 @@ const blacklistedHeaders = [
   'forwarded',
   'x-real-ip',
   'content-length',
+  // Stealth: Strip Fetch metadata that reveals we are a proxy/fetch request
+  'sec-fetch-dest',
+  'sec-fetch-mode',
+  'sec-fetch-site',
+  'sec-fetch-user',
   ...Object.keys(headerMap),
 ];
 

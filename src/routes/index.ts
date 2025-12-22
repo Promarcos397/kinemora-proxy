@@ -12,9 +12,15 @@ import {
 
 export default defineEventHandler(async (event) => {
   // Handle preflight CORS requests
+  // Handle preflight CORS requests
+  setResponseHeaders(event, {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Max-Age': '86400',
+  });
+
   if (isPreflightRequest(event)) {
-    handleCors(event, {});
-    // Ensure the response ends here for preflight
     event.node.res.statusCode = 204;
     event.node.res.end();
     return;
@@ -38,9 +44,8 @@ export default defineEventHandler(async (event) => {
       event,
       status: 200,
       data: {
-        message: `Proxy is working as expected (v${
-          useRuntimeConfig(event).version
-        })`,
+        message: `Proxy is working as expected (v${useRuntimeConfig(event).version
+          })`,
       },
     });
   }
